@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+CONF_DIR=$PREFIX/etc/test
+fetch() {
+  curl -f --retry 5 --retry-all-errors -sL $@
+}
+
+__init_conf() {
+  if ! [ -d $CONF_DIR ]; then
+		mkdir -p $CONF_DIR/{repos,installed,caches}
+		echo "https://github.com/IshanNeupan/test/" > $CONF_DIR/repositories 
+	fi
+}
+
+__install() {
+  if ! [ -f $CONF_DIR/scripts/$1 ]; then
+    echo -e "Script Not Found!!"
+    exit 1
+  fi
+  if [ -f $CONF_DIR/scripts/$1 ]; then
+    bash $CONF_DIR/scripts/$1 >/dev/null
+    if [ $? == '0' ]; then
+      echo -e "Sucessful"
+    fi
+    if [ $? == '1' ]; then
+      echo -e "Failed"
+    fi
+    else
+		  echo "Usage: test install [distros]"
+	  fi
+  }
+
+__update() {
+  __init_conf
+
+  echo "Starting Update........"
+  rm -rf $CONF_DIR/scripts
+  git clone https://github.com/dsujal30/test-mirror.git $CONF_DIR/scripts -q
+  if [ $? = 0 ]; then
+			echo "Done"
+		else
+			echo "Fail"
+		fi
+}
+__help() {
+  echo -e "Welcome To Test"
+  echo -e "Commands:"
+  echo -e "install: Install Desired Distro"
+  echo -e "update: Update Mirrors"
+}
+
+__config() {
+	__init_conf
+}
+
+if [ $# -ge 1 ]; then
+	case "$1" in
+		install|i|in) shift 1; __install $@ ;;
+    config|c|cfg) shift 1; __config $@ ;;
+    update|u|up) shift 1; __update ;;
+    *) shift 1; __help;;
+        esac
+else
+        __help
+fi
+
+exit 1
