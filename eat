@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 CONF_DIR=$PREFIX/etc/test
-fetch() {
-  curl -f --retry 5 --retry-all-errors -sL $@
-}
-
 __init_conf() {
   if ! [ -d $CONF_DIR ]; then
 		mkdir -p $CONF_DIR/{repos,installed,caches}
