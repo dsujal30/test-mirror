@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+CONF_DIR=$PREFIX/etc/test
+DEST=$CONF_DIR/installed/alpine
+echo -e "Starting Installer"
+apt install proot curl tar --assume-yes
+if [ -d ${DESTINATION} ]; then
+  printf "Alpine Is Already Installed, Do You Want To Re-Install?\n"
+  read -p ask
+  if [ "${ask}" = "y" ]; then
+    rm -rf ${DEST}
+  elif [ "${ask}" = "n" ]; then
+		exit 1
+  else
+      printf "Wrong Input/n"
+      exit 1
+    fi
+fi
+mkdir ${DEST}
+
+unknownarch() {
+  echo "[*] Unknown Arch"
+  exit 1
+}
+
+checksysinfo() {
+	printf "[*] Checking host architecture ...\n"
+	case $(getprop ro.product.cpu.abi) in
+		arm64-v8a)
+			SETARCH=aarch64
+			;;
+		armeabi|armeabi-v7a)
+			SETARCH=armhf
+			;;
+		x86|i686)
+			SETARCH=x86
+			;;
+		x86_64)
+			SETARCH=x86_64
+			;;
+		*)
+			unknownarch
+			;;
+	esac
+}
+
+extract() {
+  echo "Starting Extraction"
+  proot --link2symlink -0 tar -xf $CONF_DIR/caches/$ROOTFS -C $DEST >/dev/null
+  printf " [OK]"
+}
+
+internet() {
+  echo "Setting Up Internet"
+  echo 'nameserver 1.1.1.1' > $DEST/etc/resolv.conf
+  printf "[OK] "
+}
+
+getalpine() {
+  ALPINE_VER=$(curl -s http://dl-cdn.alpinelinux.org/alpine/latest-stable/releases/$SETARCH/latest-releases.yaml | grep -m 1 -o version.* | sed -e 's/[^0-9.]*//g' -e 's/-$//')
+	if [ -z "$ALPINE_VER" ] ; then
+		exit 1
+	fi
+	ALPINE_URL="http://dl-cdn.alpinelinux.org/alpine/latest-stable/releases/$SETARCH/alpine-minirootfs-$ALPINE_VER-$SETARCH.tar.gz"
+  echo "Getting File"
+  seturl $SETARCH
+	cd ${DEST}; curl --progress-bar -L --fail --retry 4 -O "$ALPINE_URL" >/dev/null
+	rootfs="alpine-minirootfs-$ALPINE_VER-$SETARCH.tar.gz"
+  printf " [OK]"
+}
+
+checksysinfo
+getalpine
+extract
+printf "[OK] Download Completed\n"
+exit 0
+printf "\n"
+
+
+
