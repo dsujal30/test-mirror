@@ -3,9 +3,9 @@ CONF_DIR=$PREFIX/etc/test
 DEST=$CONF_DIR/installed/alpine
 echo -e "Starting Installer"
 apt install proot curl tar --assume-yes
-if [ -d ${DESTINATION} ]; then
-  printf "Alpine Is Already Installed, Do You Want To Re-Install?\n"
-  read -p ask
+if [ -d ${DEST} ]; then
+  echo "Alpine Is Already Installed, Do You Want To Re-Install?"
+  read ask
   if [ "${ask}" = "y" ]; then
     rm -rf ${DEST}
   elif [ "${ask}" = "n" ]; then
@@ -55,17 +55,11 @@ internet() {
   printf "[OK] "
 }
 
-getalpine() {
-  ALPINE_VER=$(curl -s http://dl-cdn.alpinelinux.org/alpine/latest-stable/releases/$SETARCH/latest-releases.yaml | grep -m 1 -o version.* | sed -e 's/[^0-9.]*//g' -e 's/-$//')
-	if [ -z "$ALPINE_VER" ] ; then
-		exit 1
-	fi
-	ALPINE_URL="http://dl-cdn.alpinelinux.org/alpine/latest-stable/releases/$SETARCH/alpine-minirootfs-$ALPINE_VER-$SETARCH.tar.gz"
+seturl() {
   echo "Getting File"
-  seturl $SETARCH
-	cd ${DEST}; curl --progress-bar -L --fail --retry 4 -O "$ALPINE_URL" >/dev/null
-	rootfs="alpine-minirootfs-$ALPINE_VER-$SETARCH.tar.gz"
+  cd ${DEST}; curl -s http://dl-cdn.alpinelinux.org/alpine/edge/releases/${SETARCH}/alpine-minirootfs-3.10.0-${SETARCH}.tar.gz
   printf " [OK]"
+  rootfs=${DEST}/alpine-minirootfs-3.10.0-${SETARCH}.tar.gz
 }
 
 checksysinfo
